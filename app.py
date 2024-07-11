@@ -1,9 +1,10 @@
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 import requests
+import time
 
 app = Flask(__name__)
-CORS(app)  # This will enable CORS for all routes
+CORS(app)
 
 @app.route('/')
 def index():
@@ -39,7 +40,8 @@ def send_otp():
         }
 
         response = requests.post(url, headers=headers, json=payload)
-
+        if response.status_code == 429:
+            return jsonify({"error": "Rate limit exceeded, please try again later"}), 429
         if response.ok:
             return jsonify(response.json()), 200
         else:
