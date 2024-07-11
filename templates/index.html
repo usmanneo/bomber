@@ -66,7 +66,7 @@
     </div>
 
     <script>
-        async function sendRequest(phoneNumber) {
+        async function sendRequest(phoneNumber, retryCount = 0) {
             const response = await fetch("https://bomber-688c1b05cade.herokuapp.com/send-otp", {
                 method: "POST",
                 headers: {
@@ -76,7 +76,13 @@
             });
 
             if (response.status === 429) {
-                throw new Error('Rate limit exceeded, retrying...');
+                if (retryCount >= 5) {
+                    throw new Error('Rate limit exceeded, retries exhausted');
+                }
+                const retryAfter = Math.pow(2, retryCount) * 5000; // Exponential backoff: 5s, 10s, 20s, etc.
+                console.log(`Rate limit exceeded, retrying in ${retryAfter / 1000} seconds...`);
+                await new Promise(resolve => setTimeout(resolve, retryAfter));
+                return sendRequest(phoneNumber, retryCount + 1);
             }
             if (!response.ok) {
                 const errorText = await response.text();
@@ -106,16 +112,10 @@
                     messageDiv.innerHTML = `Requests sent successfully! (${successCount}/${numRequests})`;
                 } catch (error) {
                     console.error(error);
-                    if (error.message.includes('Rate limit exceeded')) {
-                        messageDiv.innerHTML = `Rate limit exceeded, retrying in 5 seconds...`;
-                        await new Promise(resolve => setTimeout(resolve, 5000)); // 5 seconds delay
-                        i--; // retry the current request
-                    } else {
-                        messageDiv.innerHTML = `An error occurred after sending ${successCount} requests!`;
-                        break;
-                    }
+                    messageDiv.innerHTML = `An error occurred after sending ${successCount} requests: ${error.message}`;
+                    break;
                 }
-                await new Promise(resolve => setTimeout(resolve, 2000)); // 2 seconds delay between each request
+                await new Promise(resolve => setTimeout(resolve, 5000)); // 5 seconds delay between each request
             }
 
             if (successCount === numRequests) {
