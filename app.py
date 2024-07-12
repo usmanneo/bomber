@@ -59,6 +59,10 @@ def send_otp():
         if response2.status_code != 200:
             return jsonify({"error": f"Failed to send OTP to Cricwick. Status code: {response2.status_code}"}), response2.status_code
 
+        # Format the phone number for the third API request
+        if phone_number.startswith('0'):
+            phone_number = '92' + phone_number[1:]
+
         # Third API request
         url3 = "https://jazztv.pk/alpha/api_gateway/index.php/users-dbss/send-otp-wc"
         headers3 = {
@@ -115,5 +119,5 @@ def send_otp():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-if __name__ == '__main__':
+if __name__ == '__name__':
     app.run(debug=True)
