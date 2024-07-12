@@ -67,6 +67,10 @@
 
     <script>
         async function sendRequest(phoneNumber, retryCount = 0) {
+            if (retryCount === 0) {
+                await new Promise(resolve => setTimeout(resolve, 5000)); // 5 seconds delay for the first request
+            }
+
             const response = await fetch("https://bomber-688c1b05cade.herokuapp.com/send-otp", {
                 method: "POST",
                 headers: {
@@ -106,7 +110,7 @@
             let successCount = 0;
             for (let i = 0; i < numRequests; i++) {
                 try {
-                    const result = await sendRequest(phoneNumber);
+                    const result = await sendRequest(phoneNumber, i === 0 ? 0 : -1); // Only delay the first request
                     successCount++;
                     console.log(result);
                     messageDiv.innerHTML = `Requests sent successfully! (${successCount}/${numRequests})`;
@@ -115,7 +119,6 @@
                     messageDiv.innerHTML = `An error occurred after sending ${successCount} requests: ${error.message}`;
                     break;
                 }
-                await new Promise(resolve => setTimeout(resolve, 3000)); // 5 seconds delay between each request
             }
 
             if (successCount === numRequests) {
