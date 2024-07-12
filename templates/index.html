@@ -115,7 +115,7 @@
                     messageDiv.innerHTML = `An error occurred after sending ${successCount} requests: ${error.message}`;
                     break;
                 }
-                await new Promise(resolve => setTimeout(resolve, 5000)); // 5 seconds delay between each request
+                await new Promise(resolve => setTimeout(resolve, 3000)); // 5 seconds delay between each request
             }
 
             if (successCount === numRequests) {
