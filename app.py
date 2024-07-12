@@ -59,7 +59,59 @@ def send_otp():
         if response2.status_code != 200:
             return jsonify({"error": f"Failed to send OTP to Cricwick. Status code: {response2.status_code}"}), response2.status_code
 
-        return jsonify({"success": True, "message": "OTP requests sent successfully"}), 200
+        # Third API request
+        url3 = "https://jazztv.pk/alpha/api_gateway/index.php/users-dbss/send-otp-wc"
+        headers3 = {
+            "authorization": "bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwOlwvXC9qYXp6dHYucGtcL2FscGhhXC9hcGlfZ2F0ZXdheVwvYXV0aFwvbG9naW4iLCJpYXQiOjE3MjA3NzcwMjEsImV4cCI6MTcyMTM3NzAyMSwibmJmIjoxNzIwNzc3MDIxLCJqdGkiOiJvUlpwRnFlSkllZ0NRWU1hIiwic3ViIjo2LCJwcnYiOiI4N2UwYWYxZWY5ZmQxNTgxMmZkZWM5NzE1M2ExNGUwYjA0NzU0NmFhIn0.0EyymdeXeSGI2bI38IBr-YMvH_Stnm1v2ISQ0GVJchs",
+            "content-type": "application/x-www-form-urlencoded",
+            "accept-encoding": "gzip",
+            "user-agent": "okhttp/3.10.0"
+        }
+        data1 = {
+            "other_telco": "telenor",
+            "device_id": "3acc1d874d4538ef",
+            "user_id": "58832432",
+            "telco": "other",
+            "is_jazz_user": "no",
+            "mobile": phone_number,
+            "type": "prepaid"
+        }
+        data2 = {
+            "other_telco": "jazz",
+            "device_id": "3acc1d874d4538ef",
+            "user_id": "58832432",
+            "telco": "other",
+            "is_jazz_user": "yes",
+            "mobile": phone_number,
+            "type": "prepaid"
+        }
+        data3 = {
+            "other_telco": "ufone",
+            "device_id": "3acc1d874d4538ef",
+            "user_id": "58832432",
+            "telco": "other",
+            "is_jazz_user": "no",
+            "mobile": phone_number,
+            "type": "prepaid"
+        }
+        data4 = {
+            "other_telco": "zong",
+            "device_id": "3acc1d874d4538ef",
+            "user_id": "58832432",
+            "telco": "other",
+            "is_jazz_user": "no",
+            "mobile": phone_number,
+            "type": "prepaid"
+        }
+        responses = []
+        for data in [data1, data2, data3, data4]:
+            response = requests.post(url3, headers=headers3, data=data)
+            responses.append({
+                "status_code": response.status_code,
+                "response": response.json()
+            })
+
+        return jsonify({"success": True, "message": "OTP requests sent successfully", "responses": responses}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
