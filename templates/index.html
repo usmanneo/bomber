@@ -5,30 +5,42 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Send OTP Requests</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+
         body {
-            font-family: 'Arial', sans-serif;
-            background-color: #f0f0f0;
+            font-family: 'Roboto', sans-serif;
+            background-color: #121212;
+            color: #fff;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
             margin: 0;
-            overflow: hidden;
         }
 
         .container {
-            background-color: white;
+            background-color: #1e1e1e;
             padding: 40px;
             border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
             text-align: center;
             animation: fadeIn 1s ease-in-out;
+            width: 300px;
+        }
+
+        .logo {
+            margin-bottom: 20px;
+        }
+
+        .logo img {
+            width: 100px;
+            animation: logoBounce 2s infinite;
         }
 
         h2 {
             margin-bottom: 20px;
             font-size: 24px;
-            color: #333;
+            color: #ff9800;
         }
 
         .input-field {
@@ -39,21 +51,23 @@
         .input-field input {
             width: 100%;
             padding: 15px;
-            border: 2px solid #ccc;
+            border: 2px solid #333;
             border-radius: 8px;
             font-size: 16px;
-            transition: border-color 0.3s;
+            background-color: #333;
+            color: #fff;
+            transition: border-color 0.3s, background-color 0.3s;
         }
 
         .input-field input:focus {
-            border-color: #007BFF;
+            border-color: #ff9800;
             outline: none;
         }
 
         .button {
             width: 100%;
             padding: 15px;
-            background-color: #007BFF;
+            background-color: #ff9800;
             color: white;
             border: none;
             border-radius: 8px;
@@ -63,24 +77,32 @@
         }
 
         .button:hover {
-            background-color: #0056b3;
+            background-color: #e68900;
             transform: translateY(-2px);
         }
 
         .message {
             margin-top: 20px;
             font-size: 16px;
-            color: #333;
+            color: #fff;
         }
 
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(-20px); }
             to { opacity: 1; transform: translateY(0); }
         }
+
+        @keyframes logoBounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
     </style>
 </head>
 <body>
     <div class="container">
+        <div class="logo">
+            <img src="https://via.placeholder.com/100" alt="Logo">
+        </div>
         <h2>Send OTP Requests</h2>
         <div class="input-field">
             <input type="text" id="phone_number" placeholder="Enter Phone Number">
