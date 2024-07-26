@@ -22,10 +22,9 @@
 
         h1 {
             font-family: 'Poppins', sans-serif;
-            font-size: 36px;
+            font-size: 24px;
             color: #ff9800;
-            margin-bottom: 40px;
-            animation: floatText 2s infinite;
+            margin-bottom: 20px;
         }
 
         .container {
@@ -44,7 +43,6 @@
 
         .logo img {
             width: 100px;
-            animation: logoBounce 2s infinite;
         }
 
         h2 {
@@ -58,7 +56,7 @@
             position: relative;
         }
 
-        .input-field input {
+        .input-field input, .input-field select {
             width: 100%;
             padding: 15px;
             border: 2px solid #333;
@@ -69,7 +67,7 @@
             transition: border-color 0.3s, background-color 0.3s;
         }
 
-        .input-field input:focus {
+        .input-field input:focus, .input-field select:focus {
             border-color: #ff9800;
             outline: none;
         }
@@ -102,19 +100,9 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        @keyframes logoBounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
-        }
-
         @keyframes float {
             0%, 100% { transform: translateY(0); }
             50% { transform: translateY(-10px); }
-        }
-
-        @keyframes floatText {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-5px); }
         }
     </style>
 </head>
@@ -129,7 +117,10 @@
             <input type="text" id="phone_number" placeholder="Enter Phone Number">
         </div>
         <div class="input-field">
-            <input type="number" id="num_requests" placeholder="Number of Requests" value="10">
+            <select id="num_requests">
+                <option value="10">10</option>
+                <option value="15">15</option>
+            </select>
         </div>
         <button class="button" onclick="sendRequests()">Send OTP</button>
         <div class="message" id="message"></div>
