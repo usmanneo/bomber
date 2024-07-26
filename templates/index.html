@@ -21,27 +21,20 @@
             overflow: hidden;
         }
 
+        .text-container {
+            position: relative;
+            overflow: hidden;
+            height: 40px; /* Adjust height to fit the text */
+            margin-bottom: 20px;
+        }
+
         h1 {
             font-family: 'Poppins', sans-serif;
             font-size: 24px;
             color: #ff9800;
-            margin-bottom: 20px;
             white-space: nowrap;
-            overflow: hidden;
-            position: relative;
-            animation: slideText 10s linear infinite;
-        }
-
-        h1:before {
-            content: "";
             position: absolute;
-            top: 0;
-            left: 0;
-            height: 100%;
-            width: 100%;
-            background-color: #121212;
-            z-index: 1;
-            animation: revealText 10s linear infinite;
+            animation: slideText 10s linear infinite;
         }
 
         .container {
@@ -134,16 +127,12 @@
             50% { left: -100%; }
             100% { left: 100%; }
         }
-
-        @keyframes revealText {
-            0% { left: 0; }
-            50% { left: 100%; }
-            100% { left: 0; }
-        }
     </style>
 </head>
 <body>
-    <h1>OTP Bomber By H4K3R</h1>
+    <div class="text-container">
+        <h1>OTP Bomber By H4K3R</h1>
+    </div>
     <div class="container">
         <div class="logo">
             <img src="https://via.placeholder.com/100" alt="Logo">
