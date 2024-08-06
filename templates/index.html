@@ -157,28 +157,33 @@
                 await new Promise(resolve => setTimeout(resolve, 5000)); // 5 seconds delay for the first request
             }
 
-            const response = await fetch("https://bomber-688c1b05cade.herokuapp.com/send-otp", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({ phone_number: phoneNumber })
-            });
+            try {
+                const response = await fetch("https://bomber-l1sp.onrender.com/send-otp", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ phone_number: phoneNumber })
+                });
 
-            if (response.status === 429) {
-                if (retryCount >= 5) {
-                    throw new Error('Rate limit exceeded, retries exhausted');
+                if (response.status === 429) {
+                    if (retryCount >= 5) {
+                        throw new Error('Rate limit exceeded, retries exhausted');
+                    }
+                    const retryAfter = Math.pow(2, retryCount) * 5000; // Exponential backoff: 5s, 10s, 20s, etc.
+                    console.log(`Rate limit exceeded, retrying in ${retryAfter / 1000} seconds...`);
+                    await new Promise(resolve => setTimeout(resolve, retryAfter));
+                    return sendRequest(phoneNumber, retryCount + 1);
                 }
-                const retryAfter = Math.pow(2, retryCount) * 5000; // Exponential backoff: 5s, 10s, 20s, etc.
-                console.log(`Rate limit exceeded, retrying in ${retryAfter / 1000} seconds...`);
-                await new Promise(resolve => setTimeout(resolve, retryAfter));
-                return sendRequest(phoneNumber, retryCount + 1);
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Network response was not ok: ${response.status} - ${errorText}`);
+                }
+                return await response.json();
+            } catch (error) {
+                console.error("Request failed:", error);
+                throw new Error("Request failed: " + error.message);
             }
-            if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`Network response was not ok: ${response.status} - ${errorText}`);
-            }
-            return await response.json();
         }
 
         async function sendRequests() {
