@@ -2,9 +2,14 @@ from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 import requests
 import time
+import logging
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for all routes
+CORS(app)
+
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 @app.route('/')
 def index():
@@ -17,6 +22,8 @@ def send_otp():
         phone_number = data.get('phone_number')
         if not phone_number:
             return jsonify({"error": "Phone number is required"}), 400
+
+        logger.info(f"Received request to send OTP to {phone_number}")
 
         # Delay before the first API request
         time.sleep(4)
@@ -42,6 +49,7 @@ def send_otp():
             "version": "multi-business"
         }
         response1 = requests.post(url1, headers=headers1, json=payload1)
+        logger.info(f"First request response: {response1.status_code} - {response1.text}")
         if response1.status_code == 429:
             return jsonify({"error": "Rate limit exceeded, please try again later"}), 429
         if not response1.ok:
@@ -62,6 +70,7 @@ def send_otp():
             "bundle_id": 13
         }
         response2 = requests.get(url2, params=params2)
+        logger.info(f"Second request response: {response2.status_code} - {response2.text}")
         if response2.status_code != 200:
             return jsonify({"error": f"Failed to send OTP to Cricwick. Status code: {response2.status_code}"}), response2.status_code
 
@@ -119,6 +128,7 @@ def send_otp():
         responses = []
         for data in [data1, data2, data3, data4]:
             response = requests.post(url3, headers=headers3, data=data)
+            logger.info(f"Third request response for {data['other_telco']}: {response.status_code} - {response.text}")
             responses.append({
                 "status_code": response.status_code,
                 "response": response.json()
@@ -126,6 +136,7 @@ def send_otp():
 
         return jsonify({"success": True, "message": "OTP requests sent successfully", "responses": responses}), 200
     except Exception as e:
+        logger.error(f"An error occurred: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
