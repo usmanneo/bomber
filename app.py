@@ -4,7 +4,7 @@ import requests
 import time
 
 app = Flask(__name__)
-CORS(app)
+CORS(app)  # Enable CORS for all routes
 
 @app.route('/')
 def index():
