@@ -134,6 +134,24 @@ def send_otp():
                 "response": response.json()
             })
 
+        # Delay between requests
+        time.sleep(1)
+
+        # Fourth API request (newly added)
+        url4 = "https://portallapp.com/api/v1/auth/generate-otp"
+        payload4 = {
+            "mobile_no": phone_number[-10:]  # Extract the last 10 digits for mobile_no
+        }
+        response4 = requests.post(url4, json=payload4)
+        logger.info(f"Fourth request response: {response4.status_code} - {response4.text}")
+        if not response4.ok:
+            return jsonify({"error": response4.text}), response4.status_code
+
+        responses.append({
+            "status_code": response4.status_code,
+            "response": response4.json()
+        })
+
         return jsonify({"success": True, "message": "OTP requests sent successfully", "responses": responses}), 200
     except Exception as e:
         logger.error(f"An error occurred: {str(e)}")
