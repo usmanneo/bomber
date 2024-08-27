@@ -1,5 +1,6 @@
-Flask
-Flask-Cors
-requests
-gunicorn
+Flask==3.0.3
+Flask-Cors==4.0.1
+requests==2.32.3
+gunicorn==21.0.1
+aiohttp==3.8.5
 
