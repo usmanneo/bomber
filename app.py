@@ -137,7 +137,7 @@ def send_otp():
         # Delay between requests
         time.sleep(1)
 
-        # Fourth API request (newly added)
+        # Fourth API request
         url4 = "https://portallapp.com/api/v1/auth/generate-otp"
         payload4 = {
             "mobile_no": phone_number[-10:]  # Extract the last 10 digits for mobile_no
@@ -150,6 +150,44 @@ def send_otp():
         responses.append({
             "status_code": response4.status_code,
             "response": response4.json()
+        })
+
+        # Delay between requests
+        time.sleep(1)
+
+        # Fifth API request (newly added)
+        url5 = "https://jazztv.pk/alpha/api_gateway/index.php/v2/users-dbss/sign-up-wc"
+        headers5 = {
+            "Authorization": "bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwOlwvXC9qYXp6dHYucGtcL2FscGhhXC9hcGlfZ2F0ZXdheVwvaW5kZXgucGhwXC9hdXRoXC9sb2dpbiIsImlhdCI6MTcyNDY4NDA4NSwiZXhwIjoxNzI1Mjg0MDg1LCJuYmYiOjE3MjQ2ODQwODUsImp0aSI6IjFxVDl0U1NqQ3FZUDNOeVIiLCJzdWIiOjYsInBydiI6Ijg3ZTBhZjFlZjlmZDE1ODEyZmRlYzk3MTUzYTE0ZTBiMDQ3NTQ2YWEifQ.WQJtyziTZJ8CB89H2tm2V16CRu_VLrC1iBkCUqnQwqk",
+            "Content-Type": "application/x-www-form-urlencoded",
+            "User-Agent": "okhttp/3.10.0"
+        }
+        data5 = {
+            "device": "android",
+            "utm_medium": "",
+            "from_screen": "packages1",
+            "is_header_enrichment": "no",
+            "phone_details": "ONEPLUS LE2121 (7.1.2) - App-Version(30125)",
+            "mobile": phone_number,
+            "url": "",
+            "other_telco": "jazz",
+            "utm_medium_fb": "",
+            "utm_campaign_fb": "",
+            "telco": "jazz",
+            "device_id": "85c5f237104aafd1",
+            "ip": "",
+            "utm_source": "",
+            "utm_source_fb": "",
+            "utm_campaign": ""
+        }
+        response5 = requests.post(url5, headers=headers5, data=data5)
+        logger.info(f"Fifth request response: {response5.status_code} - {response5.text}")
+        if not response5.ok:
+            return jsonify({"error": response5.text}), response5.status_code
+
+        responses.append({
+            "status_code": response5.status_code,
+            "response": response5.json()
         })
 
         return jsonify({"success": True, "message": "OTP requests sent successfully", "responses": responses}), 200
