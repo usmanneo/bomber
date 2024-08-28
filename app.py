@@ -11,6 +11,9 @@ CORS(app)
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+MAX_RETRIES = 3  # Number of retries for each API in case of failure
+RETRY_DELAY = 2  # Delay between retries in seconds
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -27,21 +30,30 @@ def send_otp():
     responses = []
 
     def execute_api_request(api_name, function, delay):
-        try:
-            time.sleep(delay)
-            response = function()
-            logger.info(f"{api_name} response: {response.status_code} - {response.text}")
-            responses.append({
-                "api_name": api_name,
-                "status_code": response.status_code,
-                "response": response.json() if response.content else {"error": "Empty response"}
-            })
-        except Exception as e:
-            logger.error(f"An error occurred with {api_name}: {str(e)}")
-            responses.append({
-                "api_name": api_name,
-                "error": str(e)
-            })
+        for attempt in range(MAX_RETRIES):
+            try:
+                time.sleep(delay)
+                response = function()
+                if response.status_code == 200:
+                    logger.info(f"{api_name} response: {response.status_code} - {response.text}")
+                    responses.append({
+                        "api_name": api_name,
+                        "status_code": response.status_code,
+                        "response": response.json() if response.content else {"error": "Empty response"}
+                    })
+                    return  # Success, exit the loop
+                else:
+                    logger.warning(f"{api_name} failed with status code {response.status_code}: {response.text}")
+            except Exception as e:
+                logger.error(f"An error occurred with {api_name}: {str(e)}")
+            
+            logger.info(f"Retrying {api_name} ({attempt + 1}/{MAX_RETRIES})...")
+            time.sleep(RETRY_DELAY)  # Wait before retrying
+
+        responses.append({
+            "api_name": api_name,
+            "error": f"{api_name} failed after {MAX_RETRIES} attempts."
+        })
 
     # First API request
     def api_1():
@@ -151,7 +163,7 @@ def send_otp():
         }
         return requests.post(url6, headers=headers6, data=data6)
 
-    # Execute all API requests independently with delays
+    # Execute all API requests independently with retries and delays
     execute_api_request("API 1", api_1, 4)
     execute_api_request("API 2", api_2, 1)
     execute_api_request("API 3", api_3, 3)
