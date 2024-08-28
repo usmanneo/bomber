@@ -26,8 +26,9 @@ def send_otp():
 
     responses = []
 
-    def execute_api_request(api_name, function):
+    def execute_api_request(api_name, function, delay):
         try:
+            time.sleep(delay)
             response = function()
             logger.info(f"{api_name} response: {response.status_code} - {response.text}")
             responses.append({
@@ -150,13 +151,13 @@ def send_otp():
         }
         return requests.post(url6, headers=headers6, data=data6)
 
-    # Execute all API requests independently
-    execute_api_request("API 1", api_1)
-    execute_api_request("API 2", api_2)
-    execute_api_request("API 3", api_3)
-    execute_api_request("API 4", api_4)
-    execute_api_request("API 5", api_5)
-    execute_api_request("API 6", api_6)
+    # Execute all API requests independently with delays
+    execute_api_request("API 1", api_1, 4)
+    execute_api_request("API 2", api_2, 1)
+    execute_api_request("API 3", api_3, 3)
+    execute_api_request("API 4", api_4, 1)
+    execute_api_request("API 5", api_5, 1)
+    execute_api_request("API 6", api_6, 1)
 
     return jsonify({"success": True, "message": "OTP requests processed", "responses": responses}), 200
 
