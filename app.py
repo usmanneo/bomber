@@ -30,7 +30,15 @@ def send_otp():
         try:
             time.sleep(delay)
             response = function()
-            if response.status_code == 200:
+            if response.status_code == 502:
+                logger.warning(f"{api_name} returned a 502 Bad Gateway error, skipping...")
+                responses.append({
+                    "api_name": api_name,
+                    "status_code": 502,
+                    "error": "502 Bad Gateway"
+                })
+                return  # Skip further processing for this API
+            elif response.status_code == 200:
                 logger.info(f"{api_name} response: {response.status_code} - {response.text}")
                 responses.append({
                     "api_name": api_name,
